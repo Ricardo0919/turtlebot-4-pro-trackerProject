@@ -1,0 +1,43 @@
+running egg_info
+creating ../../build/tracking_person/tracking_person.egg-info
+writing ../../build/tracking_person/tracking_person.egg-info/PKG-INFO
+writing dependency_links to ../../build/tracking_person/tracking_person.egg-info/dependency_links.txt
+writing entry points to ../../build/tracking_person/tracking_person.egg-info/entry_points.txt
+writing requirements to ../../build/tracking_person/tracking_person.egg-info/requires.txt
+writing top-level names to ../../build/tracking_person/tracking_person.egg-info/top_level.txt
+writing manifest file '../../build/tracking_person/tracking_person.egg-info/SOURCES.txt'
+reading manifest file '../../build/tracking_person/tracking_person.egg-info/SOURCES.txt'
+writing manifest file '../../build/tracking_person/tracking_person.egg-info/SOURCES.txt'
+running build
+running build_py
+creating /home/ricardosierra/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/tracker_ws/build/tracking_person/build
+creating /home/ricardosierra/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/tracker_ws/build/tracking_person/build/lib
+creating /home/ricardosierra/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/tracker_ws/build/tracking_person/build/lib/tracking_person
+copying tracking_person/TrackerNode.py -> /home/ricardosierra/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/tracker_ws/build/tracking_person/build/lib/tracking_person
+copying tracking_person/__init__.py -> /home/ricardosierra/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/tracker_ws/build/tracking_person/build/lib/tracking_person
+copying tracking_person/MotorsNode.py -> /home/ricardosierra/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/tracker_ws/build/tracking_person/build/lib/tracking_person
+running install
+running install_lib
+creating /home/ricardosierra/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/tracker_ws/install/tracking_person/lib/python3.12/site-packages/tracking_person
+copying /home/ricardosierra/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/tracker_ws/build/tracking_person/build/lib/tracking_person/TrackerNode.py -> /home/ricardosierra/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/tracker_ws/install/tracking_person/lib/python3.12/site-packages/tracking_person
+copying /home/ricardosierra/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/tracker_ws/build/tracking_person/build/lib/tracking_person/__init__.py -> /home/ricardosierra/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/tracker_ws/install/tracking_person/lib/python3.12/site-packages/tracking_person
+copying /home/ricardosierra/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/tracker_ws/build/tracking_person/build/lib/tracking_person/MotorsNode.py -> /home/ricardosierra/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/tracker_ws/install/tracking_person/lib/python3.12/site-packages/tracking_person
+byte-compiling /home/ricardosierra/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/tracker_ws/install/tracking_person/lib/python3.12/site-packages/tracking_person/TrackerNode.py to TrackerNode.cpython-312.pyc
+byte-compiling /home/ricardosierra/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/tracker_ws/install/tracking_person/lib/python3.12/site-packages/tracking_person/__init__.py to __init__.cpython-312.pyc
+byte-compiling /home/ricardosierra/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/tracker_ws/install/tracking_person/lib/python3.12/site-packages/tracking_person/MotorsNode.py to MotorsNode.cpython-312.pyc
+running install_data
+creating /home/ricardosierra/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/tracker_ws/install/tracking_person/share/ament_index
+creating /home/ricardosierra/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/tracker_ws/install/tracking_person/share/ament_index/resource_index
+creating /home/ricardosierra/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/tracker_ws/install/tracking_person/share/ament_index/resource_index/packages
+copying resource/tracking_person -> /home/ricardosierra/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/tracker_ws/install/tracking_person/share/ament_index/resource_index/packages
+copying package.xml -> /home/ricardosierra/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/tracker_ws/install/tracking_person/share/tracking_person
+creating /home/ricardosierra/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/tracker_ws/install/tracking_person/share/tracking_person/models
+copying tracking_person/models/TrackerPerson.pt -> /home/ricardosierra/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/tracker_ws/install/tracking_person/share/tracking_person/models
+creating /home/ricardosierra/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/tracker_ws/install/tracking_person/share/tracking_person/launch
+copying launch/Tracker_launch.py -> /home/ricardosierra/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/tracker_ws/install/tracking_person/share/tracking_person/launch
+running install_egg_info
+Copying ../../build/tracking_person/tracking_person.egg-info to /home/ricardosierra/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/tracker_ws/install/tracking_person/lib/python3.12/site-packages/tracking_person-0.0.0-py3.12.egg-info
+running install_scripts
+Installing MotorsNode script to /home/ricardosierra/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/tracker_ws/install/tracking_person/lib/tracking_person
+Installing TrackerNode script to /home/ricardosierra/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/tracker_ws/install/tracking_person/lib/tracking_person
+writing list of installed files to '/home/ricardosierra/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/tracker_ws/build/tracking_person/install.log'

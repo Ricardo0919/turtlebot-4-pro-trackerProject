@@ -1,0 +1,5 @@
+setuptools
+ultralytics
+
+[test]
+pytest
