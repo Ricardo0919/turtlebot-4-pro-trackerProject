@@ -1,1 +1,12 @@
+__pycache__/
+*.pyc
+
+.vscode/
+.env/
+.venv/
+
+**/build/
+**/install/
+**/log/
+
 dataset/
