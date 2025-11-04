@@ -1,3 +1,0 @@
-[console_scripts]
-MotorsNode = tracking_person.MotorsNode:main
-TrackerNode = tracking_person.TrackerNode:main
