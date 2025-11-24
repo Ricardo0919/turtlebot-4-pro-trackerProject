@@ -42,9 +42,17 @@ class MotorsNode(Node):
         ts = TwistStamped()
         ts.header.stamp = now.to_msg()
         ts.header.frame_id = 'base_link'
+
         ts.twist.linear.x = float(lin_x)
+        # Don't move forward/backward
+        ts.twist.linear.y = 0.0
+        ts.twist.linear.z = 0.0
+        ts.twist.angular.x = 0.0
+        ts.twist.angular.y = 0.0
         ts.twist.angular.z = float(ang_z)
+
         self.cmd_pub.publish(ts)
+
 
     def control_loop(self):
         now = self.get_clock().now()

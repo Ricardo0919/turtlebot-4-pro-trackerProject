@@ -12,9 +12,9 @@ def generate_launch_description():
             'rgb_topic': '/oakd/rgb/preview/image_raw',
             'model_file': 'TrackerPerson.pt',
             'conf': 0.60,
-            'deadband': 0.10,
-            'target_w': 160,
-            'target_h': 120,
+            'deadband': 0.20,
+            'target_w': 120,
+            'target_h': 160,
         }],
     )
 
@@ -26,7 +26,7 @@ def generate_launch_description():
         parameters=[{
             'kp': 1.5,
             'deadband': 0.05,
-            'max_w': 1.2,
+            'max_w': 1.5,
             'timeout_s': 0.5,
         }],
     )
