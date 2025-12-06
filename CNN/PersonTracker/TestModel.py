@@ -18,7 +18,7 @@ print("✅ Cámara iniciada correctamente. Presiona 'q' para salir.")
 time.sleep(1.0)  # Esperar un segundo para estabilizar la cámara
 
 # Crear la ventana de visualización solo una vez
-cv2.namedWindow("YOLOv8 - Detección de Semáforo", cv2.WINDOW_NORMAL)
+cv2.namedWindow("Tracker person", cv2.WINDOW_NORMAL)
 
 while True:
     ret, frame = cap.read()
@@ -37,7 +37,7 @@ while True:
         annotated_frame = results[0].plot()
 
         # Mostrar el frame con anotaciones en la ventana pre-creada
-        cv2.imshow("YOLOv8 - Detección de Semáforo", annotated_frame)
+        cv2.imshow("Tracker person", annotated_frame)
 
     except Exception as e:
         print(f"⚠️ Error durante la inferencia o visualización: {e}")

@@ -1,4 +1,9 @@
+Laptop
 source /opt/ros/jazzy/setup.bash
 colcon build
 source install/setup.bash
 ros2 launch tracker_person Tracker_launch.py
+
+Robot
+ros2 launch turtlebot4_bringup oakd.launch.py
+

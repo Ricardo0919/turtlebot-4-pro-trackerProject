@@ -32,7 +32,9 @@ setup(
     entry_points={
         'console_scripts': [
             'TrackerNode = tracking_person.TrackerNode:main',
+            'TrackerNodeScale = tracking_person.TrackerNodeScale:main',
             'MotorsNode = tracking_person.MotorsNode:main',
+            'MotorsMovingNode = tracking_person.MotorsMovingNode:main',
         ],
     },
 )
