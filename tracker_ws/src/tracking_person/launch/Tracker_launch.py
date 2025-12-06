@@ -3,20 +3,6 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 
 def generate_launch_description():
-    tracker = Node(
-        package='tracking_person',
-        executable='TrackerNode',
-        name='tracking_person',
-        output='screen',
-        parameters=[{
-            'rgb_topic': '/oakd/rgb/preview/image_raw',
-            'model_file': 'TrackerPerson.pt',
-            'conf': 0.60,
-            'deadband': 0.20,
-            'target_w': 120,
-            'target_h': 160,
-        }],
-    )
 
     tracker_onnx = Node(
         package='tracking_person',
@@ -43,9 +29,9 @@ def generate_launch_description():
             'deadband': 0.05,
             'max_w': 1.5,
             'timeout_s': 0.5,
-            'near_threshold': 0.60,    # >= 70% → ir hacia atrás
-            'far_threshold': 0.65,     # <= 50% → ir hacia adelante
-            'linear_speed': 0.15,      # velocidad lineal (m/s)
+            'near_threshold': 0.60,
+            'far_threshold': 0.65,
+            'linear_speed': 0.15,
             'search_on_no_target': False,
         }],
     )

@@ -9,8 +9,14 @@ ssh ubuntu@[ip]
 turtlebot4
 ros2 launch turtlebot4_bringup oakd.launch.py
 
+cd ~/turtlebot-4-pro-trackerProject/tracker_ws
+colcon build
+source /opt/ros/jazzy/setup.bash
+export AMENT_PREFIX_PATH=$HOME/turtlebot-4-pro-trackerProject/tracker_ws/install/tracking_person:$AMENT_PREFIX_PATH
+ros2 run tracking_person TrackerNodeOnnx
+
+
 Move the blob to the robot
 cd "~/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/CNN/PersonTracker/models"
-
 scp best_openvino_2022.1_6shave.blob ubuntu@192.168.0.167:/home/ubuntu
 
