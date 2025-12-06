@@ -43,8 +43,8 @@ def generate_launch_description():
             'deadband': 0.05,
             'max_w': 1.5,
             'timeout_s': 0.5,
-            'near_threshold': 0.70,    # >= 70% → ir hacia atrás
-            'far_threshold': 0.50,     # <= 50% → ir hacia adelante
+            'near_threshold': 0.60,    # >= 70% → ir hacia atrás
+            'far_threshold': 0.65,     # <= 50% → ir hacia adelante
             'linear_speed': 0.15,      # velocidad lineal (m/s)
             'search_on_no_target': False,
         }],
