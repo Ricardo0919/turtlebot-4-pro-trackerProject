@@ -12,7 +12,10 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        (os.path.join('share', package_name, 'models'), glob(os.path.join(package_name, 'models', '*.pt'))),
+        (os.path.join('share', package_name, 'models'),
+            glob(os.path.join(package_name, 'models', '*.pt')) +
+            glob(os.path.join(package_name, 'models', '*.onnx'))
+        ),
         (os.path.join('share', package_name, 'launch'), glob(os.path.join('launch', '*launch.[pxy][yma]*'))),
     ],
     install_requires=[
@@ -33,6 +36,7 @@ setup(
         'console_scripts': [
             'TrackerNode = tracking_person.TrackerNode:main',
             'TrackerNodeScale = tracking_person.TrackerNodeScale:main',
+            'TrackerNodeOnnx = tracking_person.TrackerNodeOnnx:main',
             'MotorsNode = tracking_person.MotorsNode:main',
             'MotorsMovingNode = tracking_person.MotorsMovingNode:main',
         ],

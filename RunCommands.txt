@@ -5,5 +5,12 @@ source install/setup.bash
 ros2 launch tracker_person Tracker_launch.py
 
 Robot
+ssh ubuntu@[ip]
+turtlebot4
 ros2 launch turtlebot4_bringup oakd.launch.py
+
+Move the blob to the robot
+cd "~/Documents/TEC/7Semestre/ApplicationProject/turtlebot-4-pro-trackerProject/CNN/PersonTracker/models"
+
+scp best_openvino_2022.1_6shave.blob ubuntu@192.168.0.167:/home/ubuntu
 
