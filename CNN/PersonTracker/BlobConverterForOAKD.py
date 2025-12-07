@@ -12,4 +12,4 @@ blob_path = blobconverter.from_onnx(
     output_dir="models"
 )
 
-print("✅ Blob generado en:", blob_path)
+print("Blob generated in:", blob_path)
