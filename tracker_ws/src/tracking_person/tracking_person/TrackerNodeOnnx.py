@@ -1,4 +1,13 @@
 #!/usr/bin/env python3
+# ===============================================================================
+# Project: Turtlebot 4 Pro - Person Tracker - Tracker Node (ONNX + YOLO)
+# Student Project
+# Date: December 7th, 2025
+# Students:
+#   - Sergi Fernandez Mendez
+#   - Ricardo Sierra Roa
+# ===============================================================================
+
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, ReliabilityPolicy, HistoryPolicy
@@ -17,34 +26,66 @@ import numpy as np
 
 
 class TrackerNodeOnnx(Node):
+    """
+    TrackerNodeOnnx
+    ---------------
+    ROS2 node for person detection and tracking using a YOLO model exported to ONNX.
+
+    Responsibilities:
+      - Subscribes to:
+          * rgb_topic (sensor_msgs/Image) - input RGB image from the camera.
+      - Publishes:
+          * tracking_person/annotated (sensor_msgs/Image)   - annotated image.
+          * tracking_person/label (std_msgs/String)         - class label of the best detection.
+          * tracking_person/target (geometry_msgs/PointStamped)
+              Normalized target position (x,y in [0,1]).
+          * tracking_person/size_ratio (std_msgs/Float32)
+              Relative bounding box area with respect to the resized image.
+
+    Behavior:
+      - Resizes the input image to (target_w, target_h) before inference.
+      - Runs inference with a YOLO ONNX model through ultralytics.
+      - Selects the highest-confidence detection as the "best" target.
+      - Computes:
+          * Normalized center of the best bounding box.
+          * Relative area (size_ratio) of the bounding box.
+      - Overlays:
+          * Bounding boxes and labels.
+          * Center line and deadband region.
+          * Size ratio percentage on the annotated image.
+    """
+
     def __init__(self):
         super().__init__('tracking_person')
 
+        # ================================ QoS configuration ================================
         qos = QoSProfile(
             reliability=ReliabilityPolicy.BEST_EFFORT,
             history=HistoryPolicy.KEEP_LAST,
             depth=5,
         )
 
-        # Parámetros
+        # ================================== Parameters ==================================
+        # Topic for the RGB input image (camera feed)
         self.rgb_topic = self.declare_parameter(
             'rgb_topic',
             '/oakd/rgb/preview/image_raw'
         ).get_parameter_value().string_value
 
-        # 👉 ahora por default usamos el modelo ONNX
+        # ONNX model file name (relative to the 'models' directory of the package)
         self.model_file = self.declare_parameter(
             'model_file',
             'TrackerPerson.onnx'
         ).get_parameter_value().string_value
 
+        # Minimum confidence threshold for detections
         self.conf_thres = self.declare_parameter(
             'conf',
             0.65
         ).get_parameter_value().double_value
 
-        # Tamaño al que vas a hacer resize antes de meter a la red
-        # Si tu ONNX se entrenó/exportó con otra resolución, ajústala aquí.
+        # Resize resolution before feeding the image into the network.
+        # If the ONNX model was trained/exported at a different resolution, change these.
         self.target_w = self.declare_parameter(
             'target_w',
             160
@@ -55,64 +96,86 @@ class TrackerNodeOnnx(Node):
             120
         ).get_parameter_value().integer_value
 
-        # Deadband horizontal (normalizado, ej 0.05 ≈ 5% del ancho)
+        # Horizontal deadband in normalized coordinates (e.g., 0.05 ≈ 5% of the width)
         self.deadband = self.declare_parameter(
             'deadband',
             0.05
         ).get_parameter_value().double_value
 
+        # ================================== Interfaces ==================================
         self.bridge = CvBridge()
+
+        # Image subscriber (camera input)
         self.sub = self.create_subscription(Image, self.rgb_topic, self.image_cb, qos)
 
+        # Annotated image publisher (resized to target_w x target_h)
         self.pub_annotated = self.create_publisher(Image, 'tracking_person/annotated', 10)
+        # Best label publisher
         self.pub_label = self.create_publisher(String, 'tracking_person/label', 10)
+        # Target position publisher (normalized center of best bounding box)
         self.pub_target = self.create_publisher(PointStamped, 'tracking_person/target', 10)
+        # Relative bounding box area publisher
         self.pub_size_ratio = self.create_publisher(Float32, 'tracking_person/size_ratio', 10)
 
+        # =============================== Model loading ===============================
         share_dir = Path(get_package_share_directory('tracking_person'))
         model_path = share_dir / 'models' / self.model_file
         if not model_path.exists():
-            self.get_logger().error(f'No encontré el modelo ONNX: {model_path}')
+            self.get_logger().error(f'Could not find ONNX model file at: {model_path}')
             raise FileNotFoundError(model_path)
 
-        self.get_logger().info(f'Cargando modelo ONNX: {model_path}')
-        self.model = YOLO(str(model_path))  # Ultralytics detecta que es ONNX y usa onnxruntime
+        self.get_logger().info(f'Loading ONNX model from: {model_path}')
+        # Ultralytics will detect that the file is ONNX and will use onnxruntime internally.
+        self.model = YOLO(str(model_path))
         self.names = self.model.names
 
-        # Callback para actualizar parámetros en runtime
+        # Dynamic parameter callback for runtime tuning
         self.add_on_set_parameters_callback(self.parameters_callback)
 
-        self.get_logger().info('✅ tracking_person listo — modelo ONNX cargado y tópicos configurados.')
+        self.get_logger().info(
+            'tracking_person node ready: ONNX model loaded and topics configured.'
+        )
 
+    # ==================================== Callbacks ====================================
     def image_cb(self, msg: Image):
-        # 1) ROS ➜ OpenCV
+        """
+        Main callback for incoming camera images.
+        Performs:
+          - ROS Image → OpenCV conversion.
+          - Resize to (target_w, target_h).
+          - YOLO inference (ONNX).
+          - Post-processing and publishing of outputs.
+        """
+        # 1) ROS Image → OpenCV (BGR)
         try:
             orig = self.bridge.imgmsg_to_cv2(msg, desired_encoding='bgr8')
         except Exception as e:
-            self.get_logger().warn(f'cv_bridge error: {e}')
+            self.get_logger().warn(f'cv_bridge conversion error: {e}')
             return
 
-        # 2) Resize a target_w × target_h
+        # 2) Resize to target resolution (target_w × target_h)
         try:
             frame = cv2.resize(orig, (self.target_w, self.target_h), interpolation=cv2.INTER_LINEAR)
         except Exception as e:
-            self.get_logger().warn(f'Resize falló: {e}')
+            self.get_logger().warn(f'Resize failed: {e}')
             return
 
-        # 3) Inferencia (ahora ONNX detrás de cámaras)
+        # 3) Inference (ONNX backend through ultralytics)
         try:
             results = self.model(frame, conf=self.conf_thres, verbose=False)
         except Exception as e:
-            self.get_logger().warn(f'YOLO (ONNX) inferencia falló: {e}')
+            self.get_logger().warn(f'YOLO (ONNX) inference failed: {e}')
             return
 
         annotated = frame.copy()
         top_label, top_conf = None, 0.0
-        best_box = None  # (x1,y1,x2,y2) en espacio target_w x target_h
+        best_box = None  # (x1, y1, x2, y2) in target_w x target_h coordinates
 
+        # 4) Post-processing: select best detection, draw all boxes
         try:
             r0 = results[0]
             if hasattr(r0, 'boxes') and r0.boxes is not None and len(r0.boxes):
+                # Find the highest-confidence detection
                 for b in r0.boxes:
                     cls_id = int(b.cls[0])
                     conf = float(b.conf[0])
@@ -127,7 +190,7 @@ class TrackerNodeOnnx(Node):
                         top_conf, top_label = conf, label
                         best_box = (x1, y1, x2, y2)
 
-                # dibujar todas las cajas (opcional)
+                # Draw all bounding boxes (for visualization only)
                 for b in r0.boxes:
                     x1, y1, x2, y2 = map(int, b.xyxy[0])
                     cls_id = int(b.cls[0])
@@ -148,6 +211,7 @@ class TrackerNodeOnnx(Node):
                         1,
                     )
             else:
+                # No detections in this frame
                 cv2.putText(
                     annotated,
                     'no detections',
@@ -158,40 +222,42 @@ class TrackerNodeOnnx(Node):
                     1,
                 )
         except Exception as e:
-            self.get_logger().warn(f'Post-proceso falló: {e}')
+            self.get_logger().warn(f'Post-processing failed: {e}')
 
-        # 3.5) Overlays: línea central + deadband
+        # 4.5) Overlay: central line and deadband region
         cx_img = int(self.target_w * 0.5)
         band = int(self.deadband * self.target_w)
         left_band = cx_img - band
         right_band = cx_img + band
-        # Centro (blanco), deadband (amarillo)
+        # Center line (white) and deadband borders (yellow)
         cv2.line(annotated, (cx_img, 0), (cx_img, self.target_h - 1), (255, 255, 255), 1)
         cv2.line(annotated, (left_band, 0), (left_band, self.target_h - 1), (0, 255, 255), 1)
         cv2.line(annotated, (right_band, 0), (right_band, self.target_h - 1), (0, 255, 255), 1)
 
-        # 4) Publish label y target si hay best_box
+        # 5) Publish label, target and size_ratio if a "best" detection exists
         if top_label is not None and best_box is not None:
+            # Publish label of the best detection
             self.pub_label.publish(String(data=top_label))
 
             x1, y1, x2, y2 = best_box
             bx = (x1 + x2) / 2.0
             by = (y1 + y2) / 2.0
-            # normalizado 0..1
+
+            # Normalized coordinates in [0, 1]
             nx = float(bx / self.target_w)
             ny = float(by / self.target_h)
 
-            # puntito del centro de bbox
+            # Draw the center of the best bounding box
             cv2.circle(annotated, (int(bx), int(by)), 2, (0, 0, 255), -1)
 
-            # ====== relación de tamaño del bounding box ======
+            # ====== Bounding box relative size (size_ratio) ======
             box_w = max(1, x2 - x1)
             box_h = max(1, y2 - y1)
             img_area = float(self.target_w * self.target_h)
             box_area = float(box_w * box_h)
             size_ratio = box_area / img_area if img_area > 0 else 0.0  # 0..1
 
-            # Solo porcentaje, esquina superior derecha
+            # Display percentage in the top-right corner
             percent_text = f'{size_ratio * 100:.1f}%'
             font = cv2.FONT_HERSHEY_SIMPLEX
             font_scale = 0.35
@@ -215,47 +281,50 @@ class TrackerNodeOnnx(Node):
                 cv2.LINE_AA,
             )
 
-            # Publicar tamaño relativo en tópico
+            # Publish relative size on dedicated topic
             self.pub_size_ratio.publish(Float32(data=size_ratio))
-            # ====== fin relación de tamaño ======
+            # ====== End of size_ratio computation ======
 
+            # Publish normalized target position
             pt = PointStamped()
-            pt.header = msg.header  # timestamp sync con imagen
-            pt.header.frame_id = 'camera'  # etiqueta lógica
+            pt.header = msg.header  # keep original timestamp
+            pt.header.frame_id = 'camera'  # logical frame name
             pt.point.x = nx
             pt.point.y = ny
             pt.point.z = 0.0
             self.pub_target.publish(pt)
 
-        # 5) Publicar imagen anotada (target_w x target_h)
+        # 6) Publish annotated image (same resolution as target_w x target_h)
         try:
             out_msg = self.bridge.cv2_to_imgmsg(annotated, encoding='bgr8')
             out_msg.header = msg.header
             self.pub_annotated.publish(out_msg)
         except Exception as e:
-            self.get_logger().warn(f'Error publicando imagen: {e}')
+            self.get_logger().warn(f'Error publishing annotated image: {e}')
 
+    # ========================== Dynamic parameter handling ==========================
     def parameters_callback(self, params):
         """
-        Callback para actualizar parámetros en tiempo real:
-        - deadband (DOUBLE)
-        - conf (DOUBLE)
-        - target_w (INTEGER)
-        - target_h (INTEGER)
+        Dynamic parameter callback.
+        Allows updating the following parameters at runtime:
+          - deadband   (DOUBLE)
+          - conf       (DOUBLE)
+          - target_w   (INTEGER)
+          - target_h   (INTEGER)
         """
         for param in params:
             if param.name == 'deadband' and param.type_ == Parameter.Type.DOUBLE:
                 self.deadband = param.value
-                self.get_logger().info(f'✅ deadband actualizado a {self.deadband}')
+                self.get_logger().info(f'deadband updated to {self.deadband}')
             elif param.name == 'conf' and param.type_ == Parameter.Type.DOUBLE:
                 self.conf_thres = param.value
-                self.get_logger().info(f'✅ conf_thres actualizado a {self.conf_thres}')
+                self.get_logger().info(f'conf_thres updated to {self.conf_thres}')
             elif param.name == 'target_w' and param.type_ == Parameter.Type.INTEGER:
                 self.target_w = param.value
-                self.get_logger().info(f'✅ target_w actualizado a {self.target_w}')
+                self.get_logger().info(f'target_w updated to {self.target_w}')
             elif param.name == 'target_h' and param.type_ == Parameter.Type.INTEGER:
                 self.target_h = param.value
-                self.get_logger().info(f'✅ target_h actualizado a {self.target_h}')
+                self.get_logger().info(f'target_h updated to {self.target_h}')
 
         return SetParametersResult(successful=True)
 

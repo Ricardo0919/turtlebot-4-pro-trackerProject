@@ -1,36 +1,50 @@
-from ultralytics import YOLO  # Librería principal para usar modelos YOLOv8
-import torch                  # PyTorch: backend que usa YOLOv8 para entrenamiento
-import multiprocessing        # Necesario en Windows, no afecta en Linux
+# ===============================================================================
+# Project: Turtlebot 4 Pro - Script for Training a YOLOv8 Model with Data Augmentation
+# Student Project
+# Date: December 7th, 2025
+# Students:
+#   - Sergi Fernandez Mendez
+#   - Ricardo Sierra Roa
+# ===============================================================================
+
+from ultralytics import YOLO  # Main library for working with YOLOv8 models
+import torch                  # PyTorch backend used by YOLOv8 for training
+import multiprocessing        # Needed on Windows; harmless on Linux
+
 
 def main():
-    # Verifica si CUDA (GPU) está disponible para acelerar el entrenamiento
-    print("CUDA disponible:", torch.cuda.is_available())
+    # Check if CUDA (GPU) is available to accelerate training
+    print("CUDA available:", torch.cuda.is_available())
 
-    # Carga del modelo YOLOv8 preentrenado ("s" = small)
-    # Este modelo servirá como base y se ajustará al dataset específico de semáforos
+    # Load a pretrained YOLOv8 small model ("s" = small, lightweight backbone)
+    # This model will be fine-tuned on the custom dataset.
     model = YOLO('yolov8s.pt')
 
-    # Reentrenamiento del modelo con data augmentation personalizado
+    # Fine-tune the model with custom data augmentation
     model.train(
-        data='data.yaml',                    # Configuración del dataset
-        epochs=50,                           # Número de épocas
-        imgsz=160,                           # Tamaño de las imágenes
-        batch=32,                            # Tamaño del lote
-        device=0,                            # GPU
-        name='tracker_aug',  # Nombre
-        augment=True,                        # Activar data augmentation
-        degrees=10,                          # Rotación aleatoria ±10°
-        scale=0.5,                           # Escalado aleatorio (0.5 a 1.5)
-        shear=10,                            # Shear horizontal/vertical ±10°
-        perspective=0.001,                   # Distorsión de perspectiva leve
-        flipud=0.0,                          # No voltear verticalmente
-        fliplr=0.5,                          # 50% de voltear horizontal
-        hsv_h=0.015,                         # Variación de tono
-        hsv_s=0.7,                           # Variación de saturación
-        hsv_v=0.4                            # Variación de brillo
+        data='data.yaml',        # Dataset configuration file
+        epochs=50,               # Number of training epochs
+        imgsz=160,               # Input image size (160 x 160)
+        batch=32,                # Batch size
+        device=0,                # GPU index (0 = first GPU)
+        name='tracker_aug',      # Run name (used for logs and weights folder)
+        augment=True,            # Enable built-in data augmentation
+
+        # Custom augmentation parameters
+        degrees=10,              # Random rotation range ±10°
+        scale=0.5,               # Random scaling factor (0.5 to 1.5 internally)
+        shear=10,                # Random shear (horizontal/vertical) ±10°
+        perspective=0.001,       # Slight perspective distortion
+        flipud=0.0,              # Probability of vertical flip (0 = disabled)
+        fliplr=0.5,              # Probability of horizontal flip (50%)
+        hsv_h=0.015,             # Hue variation
+        hsv_s=0.7,               # Saturation variation
+        hsv_v=0.4                # Value (brightness) variation
     )
 
-# Punto de entrada del script
+
+# Script entry point
 if __name__ == '__main__':
+    # Required on Windows to safely spawn training processes
     multiprocessing.freeze_support()
     main()

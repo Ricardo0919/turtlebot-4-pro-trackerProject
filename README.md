@@ -1,57 +1,87 @@
-# Turtlebot 4 Pro - Person Tracker Project
-# TurtleBot4 Pro — Person Follower (ROS 2 Humble + OAK‑D Pro + YOLOv8)
+# TurtleBot4 Pro — Person Tracker (ROS 2 Jazzy + OAK-D Pro + YOLOv8)
 
 ## Project Overview
-This project enables a TurtleBot4 Pro to follow a person smoothly and reliably using its onboard OAK‑D Pro camera and ROS 2 Humble. Detection is powered by a YOLOv8 model trained in PyTorch and deployed to the camera via ONNX → OpenVINO blob, so inference runs on‑device while the Raspberry Pi focuses on control and messaging.
+This project implements a real-time 2D person-following system for the TurtleBot4 Pro using ROS 2 Jazzy, an OAK-D Pro RGB camera, and a YOLOv8 model exported to ONNX.  
+Inference does **not** run on the OAK-D or on the TurtleBot’s Raspberry Pi, as both lack the required compute power. Instead, an external computer performs ONNX inference and sends results back to the robot through a dedicated high-speed Wi-Fi router (up to 3 Gb/s).  
+The system tracks a person in image space (no depth/3D estimation) and sends velocity commands to make the robot follow the detected target.
 
 ## Objectives
-- Detect the `person` class in real time and obtain 3D position (X, Y, Z) from the OAK‑D Pro.
-- Track and select a single target consistently, even in crowded scenes.
-- Generate smooth velocity commands to follow at a comfortable distance.
-- Provide clear interfaces (topics, messages) for easy integration with navigation or logging tools.
-- Keep CPU usage on the robot low by offloading inference to the camera NPU.
+- Detect the `person` class in real time using a YOLOv8 ONNX model.
+- Track the target in **2D only** (horizontal position + bounding-box scale).
+- Generate smooth `/cmd_vel` commands via a simple proportional controller.
+- Maintain a lightweight ROS 2 architecture suitable for limited hardware.
+- Achieve low latency by offloading all inference to an external machine.
 
 ## Hardware
-- TurtleBot4 Pro (iRobot Create 3 base + Raspberry Pi 4)
-- Luxonis OAK‑D Pro (RGB + stereo depth + IR projector)
-- Development laptop (for model training and testing)
-- Power and networking accessories as required
+- TurtleBot4 Pro (Create 3 base + Raspberry Pi 4)
+- Luxonis OAK-D Pro (RGB only; depth not used)
+- External computer (model inference + ROS 2 nodes)
+- High-speed Wi-Fi router (≈ 3 Gb/s throughput for camera → PC → robot loop)
 
 ## Technology Stack
-- **ROS 2 Humble (Ubuntu 22.04)** for middleware and lifecycle management.
-- **OAK‑D Pro / DepthAI** for spatial AI and depth estimation.
-- **YOLOv8 (Ultralytics, PyTorch)** for model training and evaluation.
-- **ONNX + OpenVINO blob** for portable, efficient on‑device inference.
-- **Custom ROS 2 node** (`person_follower`) for control and decision logic.
+- **ROS 2 Jazzy (Ubuntu 24.04)**
+- **YOLOv8 (Ultralytics)** trained in PyTorch, exported to **ONNX**
+- **OpenCV + cv_bridge** for image processing
+- **Custom ROS 2 nodes**:
+  - `TrackerNodeOnnx` / `TrackerNodeScale` for 2D detection + tracking
+  - `MotorsNode` for velocity control using a P-controller
 
-## System Architecture (High‑Level)
-- **Perception Layer:** OAK‑D Pro runs the compiled neural network and publishes spatial detections (bounding box + 3D coordinates + confidence).
-- **Tracking Layer:** Maintains the selected target over time to avoid ID swaps.
-- **Control Layer:** Computes linear and angular velocities from distance and heading errors, applying filtering, limits, and safety rules.
-- **Robot I/O:** Velocity commands are sent to the Create 3; sensor data and status are exposed via standard ROS 2 topics.
+## System Architecture (Actual Implementation)
+- **Perception:**  
+  The external computer receives RGB frames and performs ONNX inference to obtain:
+  - normalized center `(x, y)`
+  - bounding-box scale (`size_ratio`)
+- **Tracking:**  
+  The system selects the **highest-confidence** person detection (no identity tracking).
+- **Control:**  
+  A proportional yaw controller + threshold-based forward motion:
+  - Rotate to center the person in the image  
+  - Move forward until size_ratio reaches a target threshold
+- **Robot I/O:**  
+  Final `/cmd_vel` is sent to the Create 3.
 
-## Core Functionality
-- Real‑time person detection with depth‑aware localization.
-- Target selection and hand‑off management when multiple people appear.
-- Smooth motion with bounded velocities, rate limiting, deadbands, and safety stops.
-- Clear, documented topics for detections, diagnostics, and velocity commands.
+_No depth, no 3D coordinates, no onboard inference._
 
 ## Control Strategy
-- **Distance control:** PI controller to maintain a target following distance.
-- **Heading control:** PD controller to keep the person centered in the field of view.
-- **Stability aids:** Exponential smoothing, deadbands, anti‑windup, slew‑rate limits, and minimum‑distance safeguards.
+### Heading Control (Yaw)
+- Pure **P-controller**:
+  ```
+  omega = kp * (0.5 - nx)
+  ```
+- Includes deadband and saturation.
 
-## Data Flow (Conceptual)
-1. OAK‑D Pro performs detection and depth estimation on‑device.
-2. Spatial detections (with X, Y, Z and confidence) are published to ROS 2.
-3. The follower node selects the target, computes errors, and outputs `/cmd_vel`.
-4. The Create 3 executes motion while monitoring safety constraints.
+### Distance Control
+- Based solely on bounding-box size:
+  ```
+  if size_ratio < far_threshold:
+      vx = linear_speed
+  else:
+      vx = 0.0
+  ```
 
-## Expected Deliverables
-- Documented model artifacts (PyTorch `.pt`, exported `.onnx`, and camera `.blob`).
-- ROS 2 packages for camera bring‑up and the `person_follower` node.
-- High‑level documentation of topics, parameters, and integration points.
-- Demo videos and evaluation metrics (latency, FPS, tracking stability).
+## Data Flow
+1. OAK-D Pro publishes RGB frames → external PC.
+2. PC runs ONNX inference and selects best detection.
+3. PC publishes:
+   - `/tracking_person/target`
+   - `/tracking_person/size_ratio`
+   - `/tracking_person/annotated` (optional)
+4. `MotorsNode` computes velocities and sends `/cmd_vel` to the robot.
+5. The TurtleBot follows the detected person.
 
-## Drive Folder Link
-Link [Drive](https://drive.google.com/drive/folders/1CY6xymP5jvlAziYTM0oSAsX0YRQBL3cf?usp=sharing)
+## Current Limitations
+- No identity tracking → cannot guarantee it follows the same person in crowded scenes.
+- No depth or spatial (3D) estimation.
+- System depends on external compute + router for low latency.
+- TurtleBot’s Raspberry Pi cannot run YOLO inference reliably.
+
+## Future Improvements
+- Add single-person filtering or re-identification to maintain target identity.
+- Integrate stereo depth or custom distance estimation for 3D following.
+- Move inference onboard using:
+  - Intel NUC / Jetson Orin / Coral TPU, or
+  - OAK-D OpenVINO blob (if optimized).
+- Improve wireless link with stronger antennas or Wi-Fi 6 router.
+
+## Drive Folder
+[Google Drive Link](https://drive.google.com/drive/folders/1CY6xymP5jvlAziYTM0oSAsX0YRQBL3cf?usp=sharing)

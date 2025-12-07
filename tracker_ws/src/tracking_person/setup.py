@@ -38,7 +38,6 @@ setup(
             'TrackerNodeScale = tracking_person.TrackerNodeScale:main',
             'TrackerNodeOnnx = tracking_person.TrackerNodeOnnx:main',
             'MotorsNode = tracking_person.MotorsNode:main',
-            'MotorsMovingNode = tracking_person.MotorsMovingNode:main',
         ],
     },
 )
