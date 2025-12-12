@@ -1,5 +1,8 @@
 # TurtleBot4 Pro — Person Tracker (ROS 2 Jazzy + OAK-D Pro + YOLOv8)
 
+## Setup & Run the Project
+For detailed setup and execution instructions, please refer to the PDF document [**"Documentation for Running the Project – TurtleBot 4 Pro – Human Tracker"**](/Documentation%20for%20running%20project%20-%20Turtlebot4%20pro%20-%20Human%20Tracker.pdf).
+
 ## Project Overview
 This project implements a real-time 2D person-following system for the TurtleBot4 Pro using ROS 2 Jazzy, an OAK-D Pro RGB camera, and a YOLOv8 model exported to ONNX.  
 Inference does **not** run on the OAK-D or on the TurtleBot’s Raspberry Pi, as both lack the required compute power. Instead, an external computer performs ONNX inference and sends results back to the robot through a dedicated high-speed Wi-Fi router (up to 3 Gb/s).  
