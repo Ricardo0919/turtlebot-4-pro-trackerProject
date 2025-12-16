@@ -47,9 +47,9 @@ class MotorsNode(Node):
         # deadband: horizontal error range around the image center where we do not rotate
         self.deadband = self.declare_parameter('deadband', 0.05).get_parameter_value().double_value
         # max_w: maximum angular velocity (rad/s)
-        self.max_w = self.declare_parameter('max_w', 1.2).get_parameter_value().double_value
+        self.max_w = self.declare_parameter('max_w', 1.5).get_parameter_value().double_value
         # timeout_s: maximum age of target/size messages before considering them stale
-        self.timeout_s = self.declare_parameter('timeout_s', 1.0).get_parameter_value().double_value
+        self.timeout_s = self.declare_parameter('timeout_s', 0.5).get_parameter_value().double_value
         # search_on_no_target is kept for compatibility, not used in the control loop
         self.search_on_no_target = self.declare_parameter(
             'search_on_no_target', False
