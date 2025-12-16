@@ -1,5 +1,6 @@
 numpy==1.26.4
 onnxruntime==1.23.2
 onnx==1.20.0
+onnxruntime-gpu==1.23.2
 opencv-python==4.10.0.84
 ultralytics==8.3.224
