@@ -81,7 +81,7 @@ class TrackerNodeOnnx(Node):
         # Minimum confidence threshold for detections
         self.conf_thres = self.declare_parameter(
             'conf',
-            0.65
+            0.60
         ).get_parameter_value().double_value
 
         # Resize resolution before feeding the image into the network.
@@ -99,7 +99,7 @@ class TrackerNodeOnnx(Node):
         # Horizontal deadband in normalized coordinates (e.g., 0.05 ≈ 5% of the width)
         self.deadband = self.declare_parameter(
             'deadband',
-            0.05
+            0.20
         ).get_parameter_value().double_value
 
         # ================================== Interfaces ==================================
